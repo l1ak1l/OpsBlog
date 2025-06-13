@@ -1,7 +1,11 @@
 from fastapi import FastAPI, HTTPException
 from app.database import supabase, redis
+from app.routes import auth
 
 app = FastAPI()
+
+app.include_router(auth.router)
+
 
 @app.get("/test/supabase")
 async def test_supabase():

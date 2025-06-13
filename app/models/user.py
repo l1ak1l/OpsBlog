@@ -8,13 +8,6 @@ class UserRole(str, Enum):
     AUTHOR = "author"
     READER = "reader"
 
-class User(BaseModel):
-    id: str  # UUID from Supabase Auth
-    email: EmailStr
-    role: UserRole = UserRole.READER
-    created_at: datetime
-    last_sign_in_at: Optional[datetime] = None
-
 class UserProfile(BaseModel):
     user_id: str
     username: str
@@ -26,4 +19,4 @@ class UserProfile(BaseModel):
     updated_at: datetime = datetime.now()
 
     class Config:
-        orm_mode = True
+        from_attributes = True

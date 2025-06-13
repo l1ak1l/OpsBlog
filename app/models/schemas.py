@@ -1,11 +1,30 @@
-from datetime import datetime
+# app/models/schemas.py
 from pydantic import BaseModel, EmailStr
-from typing import List, Optional
-from .user import UserRole
-from .post import PostStatus
+from datetime import datetime
+from typing import List, Optional, Any
+from enum import Enum
 
-# User Schemas
-class UserCreate(BaseModel):
+# Enums moved here to avoid circular imports
+class PostStatus(str, Enum):
+    DRAFT = "draft"
+    PUBLISHED = "published"
+    ARCHIVED = "archived"
+
+class UserRole(str, Enum):
+    ADMIN = "admin"
+    AUTHOR = "author"
+    READER = "reader"
+
+class ReactionType(str, Enum):
+    LIKE = "like"
+    BOOKMARK = "bookmark"
+
+# Authentication Schemas
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class UserRegister(BaseModel):
     email: EmailStr
     password: str
     username: str
@@ -15,8 +34,9 @@ class UserResponse(BaseModel):
     email: EmailStr
     role: UserRole
     created_at: datetime
-    profile: dict  # Will be populated with UserProfile
-
+    username: str
+    avatar_url: Optional[str] = None
+    bio: Optional[str] = None
 # Post Schemas
 class PostCreate(BaseModel):
     title: str
@@ -54,10 +74,10 @@ class CommentResponse(BaseModel):
     username: str
     avatar_url: Optional[str]
     created_at: datetime
-    replies: List['CommentResponse'] = []  # For nested comments
+    replies: List['CommentResponse'] = []
 
 # Fix circular reference
-CommentResponse.update_forward_refs()
+CommentResponse.model_rebuild()
 
 # Analytics Schemas
 class PostAnalytics(BaseModel):
