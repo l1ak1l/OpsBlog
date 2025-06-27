@@ -1,5 +1,5 @@
 from enum import Enum
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 from typing import List, Optional
 
@@ -24,6 +24,5 @@ class Post(BaseModel):
     updated_at: datetime = datetime.now()
     views: int = 0
     categories: List[PostCategory] = []
-
-    class Config:
-        orm_mode = True
+    
+    model_config = ConfigDict(from_attributes=True)
