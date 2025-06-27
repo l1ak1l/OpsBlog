@@ -14,6 +14,7 @@ class UserRole(str, Enum):
     ADMIN = "admin"
     AUTHOR = "author"
     READER = "reader"
+    AUTHENTICATED = "authenticated"
 
 class ReactionType(str, Enum):
     LIKE = "like"
@@ -29,6 +30,10 @@ class UserRegister(BaseModel):
     password: str
     username: str
 
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
 class UserResponse(BaseModel):
     id: str
     email: EmailStr
@@ -37,6 +42,7 @@ class UserResponse(BaseModel):
     username: str
     avatar_url: Optional[str] = None
     bio: Optional[str] = None
+
 # Post Schemas
 class PostCreate(BaseModel):
     title: str

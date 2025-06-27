@@ -8,6 +8,7 @@ from app.config import settings
 from app.database.supabase import sb_client  # Import directly
 from app.models.schemas import UserRole, UserResponse 
 from typing import Optional
+from supabase import AuthApiError
 
 # OAuth2 scheme for token authentication
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
@@ -35,6 +36,19 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     )
     return encoded_jwt
 
+def get_user_role(supabase_role: str) -> UserRole:
+    """Safely map Supabase role to UserRole enum with fallback"""
+    try:
+        return UserRole(supabase_role)
+    except ValueError:
+        # Map common Supabase roles to our roles
+        role_mapping = {
+            "authenticated": UserRole.READER,
+            "anon": UserRole.READER,
+            "service_role": UserRole.ADMIN,
+        }
+        return role_mapping.get(supabase_role, UserRole.READER)
+
 async def authenticate_user(email: str, password: str) -> Optional[UserResponse]:
     # Get user from Supabase Auth
     try:
@@ -57,12 +71,15 @@ async def authenticate_user(email: str, password: str) -> Optional[UserResponse]
             return UserResponse(
                 id=auth_response.user.id,
                 email=auth_response.user.email,
-                role=UserRole(auth_response.user.role or "reader"),
+                role=get_user_role(auth_response.user.role or "authenticated"),
                 created_at=auth_response.user.created_at,
                 username=profile.get("username", ""),
                 avatar_url=profile.get("avatar_url"),
                 bio=profile.get("bio")
             )
+    except AuthApiError as e:
+        print(f"Supabase Auth error: {e.message}")
+        return None
     except Exception as e:
         print(f"Authentication error: {str(e)}")
         return None
@@ -101,7 +118,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> UserResponse:
         return UserResponse(
             id=user_id,
             email=user_data.data["email"],
-            role=UserRole(user_data.data.get("role", "reader")),
+            role=get_user_role(user_data.data.get("role", "reader")),
             created_at=user_data.data["created_at"],
             username=user_data.data["username"],
             avatar_url=user_data.data.get("avatar_url"),
